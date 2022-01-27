@@ -1,5 +1,4 @@
-FROM php:7.4-apache
-LABEL maintainer="Andy Miller <rhuk@getgrav.org> (@rhukster)"
+FROM php:8.0-apache
 
 # Enable Apache Rewrite + Expires Module
 RUN a2enmod rewrite expires && \
@@ -10,13 +9,16 @@ RUN a2enmod rewrite expires && \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     libfreetype6-dev \
-    libjpeg62-turbo-dev \
+    libjpeg-dev \
     libpng-dev \
+    libwebp-dev \
+    libxpm-dev \
     libyaml-dev \
     libzip4 \
     libzip-dev \
     zlib1g-dev \
     libicu-dev \
+    libldap2-dev \
     g++ \
     git \
     cron \
@@ -24,9 +26,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-install opcache \
     && docker-php-ext-configure intl \
     && docker-php-ext-install intl \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --enable-gd --with-jpeg --with-freetype --with-webp --with-xpm \
     && docker-php-ext-install -j$(nproc) gd \
+    && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ \
+    && docker-php-ext-install ldap \
     && docker-php-ext-install zip \
+    && docker-php-ext-install exif \
     && rm -rf /var/lib/apt/lists/*
 
 # set recommended PHP.ini settings
@@ -44,8 +49,9 @@ RUN { \
     } > /usr/local/etc/php/conf.d/php-recommended.ini
 
 RUN pecl install apcu \
-    && pecl install yaml-2.0.4 \
-    && docker-php-ext-enable apcu yaml
+    && pecl install yaml-stable \
+    && pecl install redis \
+    && docker-php-ext-enable apcu yaml redis
 
 # Set user to www-data
 RUN chown www-data:www-data /var/www
