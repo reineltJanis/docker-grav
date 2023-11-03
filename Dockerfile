@@ -1,4 +1,4 @@
-FROM php:8.0-apache
+FROM php:8.1-apache
 
 # Enable Apache Rewrite + Expires Module
 RUN a2enmod rewrite expires && \
@@ -37,9 +37,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # set recommended PHP.ini settings
 # see https://secure.php.net/manual/en/opcache.installation.php
 RUN { \
-    echo 'opcache.memory_consumption=128'; \
-    echo 'opcache.interned_strings_buffer=8'; \
-    echo 'opcache.max_accelerated_files=4000'; \
+    echo 'opcache.memory_consumption=256'; \
+    echo 'opcache.interned_strings_buffer=16'; \
+    echo 'opcache.max_accelerated_files=8000'; \
     echo 'opcache.revalidate_freq=2'; \
     echo 'opcache.fast_shutdown=1'; \
     echo 'opcache.enable_cli=1'; \
@@ -52,6 +52,9 @@ RUN pecl install apcu \
     && pecl install yaml-stable \
     && pecl install redis \
     && docker-php-ext-enable apcu yaml redis
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Set user to www-data
 RUN chown www-data:www-data /var/www
